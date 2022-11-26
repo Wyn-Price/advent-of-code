@@ -1,5 +1,7 @@
-extern crate chrono;
+#![feature(array_chunks)]
+#![feature(iter_array_chunks)]
 
+extern crate chrono;
 mod years;
 
 use std::fs;
