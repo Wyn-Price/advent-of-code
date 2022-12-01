@@ -2,7 +2,7 @@ mod days;
 
 use std::fs;
 
-static YEAR: &str = "2021";
+static YEAR: &str = "2022";
 
 #[tokio::main]
 async fn main() {
