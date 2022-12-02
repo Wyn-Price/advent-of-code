@@ -1,0 +1,14 @@
+{
+	"name": "WP - Codespaces Rust",
+	"extensions": [
+		"vscodevim.vim",
+		"matklad.rust-analyzer",
+		"serayuzgur.crates",
+		"vadimcn.vscode-lldb"
+	],
+	"dockerFile": "Dockerfile",
+	"settings": {
+		"editor.formatOnSave": true,
+		"vim.useSystemClipboard": true
+	}
+}
