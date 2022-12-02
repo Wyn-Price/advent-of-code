@@ -14,6 +14,8 @@ apt-get install -y \
 ## update and install 2nd level of packages
 apt-get install -y pkg-config libssl-dev
 
+source "$HOME/.cargo/env"
+
 ## Install rustup and common components
 curl https://sh.rustup.rs -sSf | sh -s -- -y
 export PATH=/root/.cargo/bin:$PATH
