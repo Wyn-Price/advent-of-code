@@ -1,7 +1,23 @@
+use std::collections::HashSet;
+
 pub fn part_a(input: &str) -> i64 {
-    panic!("Part A not implimented yet");
+    parse::<4>(input)
 }
 
 pub fn part_b(input: &str) -> i64 {
-    panic!("Part B not implimented yet");
+    parse::<14>(input)
+}
+
+fn parse<const N: usize>(input: &str) -> i64 {
+    input
+        .chars()
+        .into_iter()
+        .collect::<Vec<_>>()
+        .array_windows::<N>()
+        .copied()
+        .enumerate()
+        .find(|(_, w)| w.iter().collect::<HashSet<_>>().len() == N)
+        .unwrap()
+        .0 as i64
+        + N as i64
 }
