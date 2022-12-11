@@ -1,6 +1,8 @@
 #![feature(iter_array_chunks)]
 #![feature(array_windows)]
 #![feature(int_roundings)]
+#[macro_use]
+extern crate scan_fmt;
 mod days;
 
 use std::fs;

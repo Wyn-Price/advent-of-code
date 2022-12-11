@@ -9,3 +9,4 @@ edition = "2021"
 reqwest = "0.11.13"
 tokio = { version = "1.22.0", features = ["full"] }
 regex = "1"
+scan_fmt = "0.2.6"
