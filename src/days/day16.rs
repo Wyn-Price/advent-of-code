@@ -10,65 +10,24 @@ pub fn part_a(input: &str) -> i64 {
     // let best = find_best(-1, 1, "AA".to_owned(), 0, HashSet::new(), &mut map);
     // best
 
-    for (key, node) in map.iter_mut() {
-        let node_map = dijkstra(&graph, node.node, None, |_| 1);
+    let mut vec = map.values_mut().collect::<Vec<_>>();
 
-        let time_to_nodes = map
-            .values()
-            .filter(|&v| !v.key.starts_with("AA"))
-            .map(|v| (v.key.to_owned(), *node_map.get(&v.node).unwrap() as i64))
-            .collect::<Vec<_>>();
+    for i in 0..vec.len() {
+        let v = &vec[i];
+        let node_map = dijkstra(&graph, v.node, None, |_| 1);
 
-        node.time_to_nodes = time_to_nodes;
+        let mut time_to_nodes = vec![];
+        for v in &vec {
+            if v.rate != 0 {
+                let a: &Valve = v;
+                time_to_nodes.push((a.key.clone(), *node_map.get(&v.node).unwrap() as i64));
+            }
+        }
+        let mut a = vec.get_mut(i).unwrap();
+        a.time_to_nodes = time_to_nodes;
     }
 
     find_best(1, "AA".to_owned(), 0, 0, HashSet::new(), &map, &graph)
-
-    // let mut current_node = "AA".to_owned();
-    // let mut opened_valves = HashSet::new();
-
-    // let mut total_rate: i64 = 0;
-    // let mut score: i64 = 0;
-
-    // let mut time = 1;
-
-    // while time < 30 {
-    //     let current = map.get(&current_node).unwrap();
-    //     let node_map = dijkstra(&graph, current.node, None, |_| 1);
-
-    //     let time_to_nodes = map
-    //         .values()
-    //         .filter(|&v| !opened_valves.contains(&v.key))
-    //         .map(|v| (v, *node_map.get(&v.node).unwrap() as i64))
-    //         .collect::<Vec<_>>();
-
-    //     // dbg!(&time_to_nodes);
-
-    //     let (best_node, mut time_taken) = time_to_nodes
-    //         .into_iter()
-    //         .max_by_key(|&(node, time_it_takes)| node.rate as i64 - time_it_takes)
-    //         .unwrap();
-
-    //     if time + time_taken >= 30 {
-    //         time_taken = 30 - time - 1;
-    //     }
-
-    //     // dbg!(&best_node, &time_taken);
-    //     // The +1 is to open the valve
-    //     print!("{time}");
-    //     time += time_taken + 1;
-
-    //     let k = &best_node.key;
-    //     println!(" - {time} ({k} {total_rate})");
-
-    //     score += (time_taken + 1) * total_rate;
-
-    //     current_node = best_node.key.clone();
-    //     opened_valves.insert(best_node.key.clone());
-    //     total_rate += best_node.rate as i64;
-    // }
-
-    // score
 }
 
 fn find_best(
@@ -85,8 +44,14 @@ fn find_best(
     current
         .time_to_nodes
         .iter()
-        .map(|(valve_key, mut time_taken)| {
-            let valve = valves.get(valve_key).unwrap();
+        .filter_map(|(valve_key, time_taken)| {
+            if game_open_valves.contains(valve_key) {
+                None
+            } else {
+                Some((valves.get(valve_key)?, *time_taken))
+            }
+        })
+        .map(|(valve, mut time_taken)| {
             if time + time_taken >= 30 {
                 time_taken = 30 - time - 1;
             }
@@ -126,99 +91,6 @@ pub fn part_b(input: &str) -> i64 {
     parse(input);
     panic!("Part B not implimented yet");
 }
-
-// fn find_best(
-//     lookahead: i8,
-//     minute: u8,
-//     game_current: String,
-//     game_score_lastround: i64,
-//     game_open_valves: HashSet<String>,
-//     valves: &mut HashMap<String, Valve>,
-// ) -> i64 {
-//     let game_score = game_score_lastround
-//         + game_open_valves
-//             .iter()
-//             .map(|v| valves.get(v).unwrap().rate as i64)
-//             .sum::<i64>();
-
-//     if minute == 30 || lookahead == 0 {
-//         return game_score;
-//     }
-
-//     let node = valves.get_mut(&game_current).unwrap();
-
-//     let mut choices = vec![];
-
-//     if !game_open_valves.contains(&game_current) {
-//         choices.push(Move::OpenValve);
-//     }
-
-//     for state in &node.leads_to {
-//         choices.push(Move::MoveTo(state.clone()))
-//     }
-
-//     let mut compute_move = |lookahead, m| {
-//         let _a: &Move = m;
-//         match m {
-//             Move::OpenValve => {
-//                 let mut open_valves = game_open_valves.clone();
-//                 open_valves.insert(game_current.clone());
-//                 find_best(
-//                     lookahead,
-//                     minute + 1,
-//                     game_current.clone(),
-//                     game_score,
-//                     open_valves,
-//                     valves,
-//                 )
-//             }
-//             Move::MoveTo(state) => find_best(
-//                 lookahead,
-//                 minute + 1,
-//                 state.clone(),
-//                 game_score_lastround,
-//                 game_open_valves.clone(),
-//                 valves,
-//             ),
-//             Move::Nothing => game_score,
-//         }
-//     };
-
-//     let lh = if lookahead == -1 { 10 } else { lookahead - 1 };
-
-//     let (best_score, best_move) = choices
-//         .iter()
-//         .map(|c| {
-//             let score = compute_move(lh, c);
-//             return (score, c);
-//         })
-//         .max_by_key(|&(score, _)| score)
-//         .unwrap();
-
-//     if lookahead == -1 {
-//         return compute_move(-1, &best_move);
-//     } else {
-//         return best_score;
-//     }
-
-//     // 0
-
-//     // A choice will always be to do nothing
-//     // let mut choices = vec![game_score];
-
-//     // if !game_open_valves.contains(&game_current) {
-//     // }
-
-//     // let leads_to = &valves.get(&game_current).unwrap().leads_to.clone();
-
-//     // for state in leads_to {
-//     // }
-
-//     // let l = choices.len();
-//     // println!("{minute} {l}");
-
-//     // choices.into_iter().max().unwrap()
-// }
 
 fn parse(input: &str) -> (HashMap<String, Valve>, Graph<String, ()>) {
     let mut graph = Graph::new();
