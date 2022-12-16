@@ -1,11 +1,26 @@
-use std::collections::{HashMap, HashSet};
+use std::{
+    borrow::{Borrow, BorrowMut},
+    collections::{HashMap, HashSet},
+};
 
 use petgraph::{algo::dijkstra, data::Build, stable_graph::NodeIndex, Graph};
 
 pub fn part_a(input: &str) -> i64 {
-    let (map, graph) = parse(input);
+    let (mut map, graph) = parse(input);
     // let best = find_best(-1, 1, "AA".to_owned(), 0, HashSet::new(), &mut map);
     // best
+
+    for (key, node) in map.iter_mut() {
+        let node_map = dijkstra(&graph, node.node, None, |_| 1);
+
+        let time_to_nodes = map
+            .values()
+            .filter(|&v| !v.key.starts_with("AA"))
+            .map(|v| (v.key.to_owned(), *node_map.get(&v.node).unwrap() as i64))
+            .collect::<Vec<_>>();
+
+        node.time_to_nodes = time_to_nodes;
+    }
 
     find_best(1, "AA".to_owned(), 0, 0, HashSet::new(), &map, &graph)
 
@@ -66,17 +81,12 @@ fn find_best(
     graph: &Graph<String, ()>,
 ) -> i64 {
     let current = valves.get(&game_current).unwrap();
-    let node_map = dijkstra(graph, current.node, None, |_| 1);
 
-    let time_to_nodes = valves
-        .values()
-        .filter(|&v| !game_open_valves.contains(&v.key))
-        .map(|v| (v, *node_map.get(&v.node).unwrap() as i64))
-        .collect::<Vec<_>>();
-
-    time_to_nodes
-        .into_iter()
-        .map(|(valve, mut time_taken)| {
+    current
+        .time_to_nodes
+        .iter()
+        .map(|(valve_key, mut time_taken)| {
+            let valve = valves.get(valve_key).unwrap();
             if time + time_taken >= 30 {
                 time_taken = 30 - time - 1;
             }
@@ -109,7 +119,7 @@ fn find_best(
             )
         })
         .max()
-        .unwrap_or_else(|| game_score + (30 - time) * game_total_rate)
+        .unwrap_or_else(|| game_score + (31 - time) * game_total_rate)
 }
 
 pub fn part_b(input: &str) -> i64 {
@@ -236,6 +246,7 @@ fn parse(input: &str) -> (HashMap<String, Valve>, Graph<String, ()>) {
                     node,
                     rate,
                     leads_to: leading_to.split(", ").map(|s| s.to_owned()).collect(),
+                    time_to_nodes: vec![],
                 },
             )
         })
@@ -258,10 +269,5 @@ struct Valve {
     node: NodeIndex,
     rate: u8,
     leads_to: Vec<String>,
-}
-
-enum Move {
-    Nothing,
-    OpenValve,
-    MoveTo(String),
+    time_to_nodes: Vec<(String, i64)>,
 }
