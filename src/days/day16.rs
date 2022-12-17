@@ -1,145 +1,160 @@
-use std::{
-    borrow::{Borrow, BorrowMut},
-    collections::{HashMap, HashSet},
-};
+use regex::Regex;
+use std::collections::HashMap;
 
-use petgraph::{algo::dijkstra, data::Build, stable_graph::NodeIndex, Graph};
+const RE: &str = r"Valve (..) has flow rate=(\d+); tunnels? leads? to valves? (.*)";
 
-pub fn part_a(input: &str) -> i64 {
-    let (mut map, graph) = parse(input);
-    // let best = find_best(-1, 1, "AA".to_owned(), 0, HashSet::new(), &mut map);
-    // best
-
-    let mut vec = map.values_mut().collect::<Vec<_>>();
-
-    for i in 0..vec.len() {
-        let v = &vec[i];
-        let node_map = dijkstra(&graph, v.node, None, |_| 1);
-
-        let mut time_to_nodes = vec![];
-        for v in &vec {
-            if v.rate != 0 {
-                let a: &Valve = v;
-                time_to_nodes.push((a.key.clone(), *node_map.get(&v.node).unwrap() as i64));
-            }
-        }
-        let mut a = vec.get_mut(i).unwrap();
-        a.time_to_nodes = time_to_nodes;
-    }
-
-    find_best(1, "AA".to_owned(), 0, 0, HashSet::new(), &map, &graph)
-}
-
-fn find_best(
-    time: i64,
-    game_current: String,
-    game_total_rate: i64,
-    game_score: i64,
-    game_open_valves: HashSet<String>,
-    valves: &HashMap<String, Valve>,
-    graph: &Graph<String, ()>,
-) -> i64 {
-    let current = valves.get(&game_current).unwrap();
-
-    current
-        .time_to_nodes
-        .iter()
-        .filter_map(|(valve_key, time_taken)| {
-            if game_open_valves.contains(valve_key) {
-                None
-            } else {
-                Some((valves.get(valve_key)?, *time_taken))
-            }
-        })
-        .map(|(valve, mut time_taken)| {
-            if time + time_taken >= 30 {
-                time_taken = 30 - time - 1;
-            }
-
-            let new_game_time = time + time_taken + 1;
-            let new_game_score = game_score + (time_taken + 1) * game_total_rate;
-
-            if time == 30 {
-                return new_game_score;
-            }
-
-            let new_game_current = valve.key.clone();
-
-            let mut new_game_open_valves = game_open_valves.clone();
-            new_game_open_valves.insert(valve.key.clone());
-
-            let new_game_total_rate = game_total_rate + valve.rate as i64;
-
-            // println!("{valve:?} {time_taken}");
-            // new_game_score
-
-            find_best(
-                new_game_time,
-                new_game_current,
-                new_game_total_rate,
-                new_game_score,
-                new_game_open_valves,
-                valves,
-                graph,
+fn parse(input: &str) -> HashMap<u64, (u64, Vec<u64>, String)> {
+    let regex = Regex::new(RE).unwrap();
+    let mut map = HashMap::new();
+    let mut arr = input
+        .split("\n")
+        .map(|line| regex.captures(line))
+        .filter_map(|caps| caps)
+        .map(|caps| {
+            (
+                caps[1].to_string(),
+                caps[2].parse::<u64>().unwrap(),
+                caps[3].to_string(),
             )
         })
-        .max()
-        .unwrap_or_else(|| game_score + (31 - time) * game_total_rate)
+        .collect::<Vec<_>>();
+    arr.sort_by(|(a, _, _), (b, _, _)| a.cmp(b));
+    for (i, (valve, rate, valves)) in arr.iter().enumerate() {
+        let bit = 1 << i;
+        let valves_bits = valves
+            .split(", ")
+            .map(|v| {
+                let j = arr.iter().position(|(valve_, _, _)| valve_ == v).unwrap();
+                1 << j
+            })
+            .collect::<Vec<_>>();
+        map.insert(bit, (*rate, valves_bits, valve.to_string()));
+    }
+    map
+}
+
+// Floyd-Warshall this bitch
+fn shortest_path(graph: HashMap<u64, Vec<u64>>) -> HashMap<u64, HashMap<u64, u64>> {
+    let keys: Vec<_> = graph.keys().copied().collect();
+    let mut dist_map: HashMap<u64, HashMap<u64, u64>> = keys
+        .iter()
+        .map(|k| {
+            let mut inner_map = HashMap::new();
+            for l in &keys {
+                inner_map.insert(*l, u64::MAX);
+            }
+            (*k, inner_map)
+        })
+        .collect();
+    for u in keys.iter() {
+        if let Some(v) = graph.get(u) {
+            if let Some(inner_map) = dist_map.get_mut(u) {
+                for v in v {
+                    inner_map.insert(*v, 1);
+                }
+            }
+        }
+    }
+    for k in keys.iter() {
+        if let Some(inner_map) = dist_map.get_mut(k) {
+            inner_map.insert(*k, 0);
+        }
+    }
+    for k in keys.iter() {
+        for i in keys.iter() {
+            for j in keys.iter() {
+                if let (Some(i_inner_map), Some(k_inner_map)) = (dist_map.get(i), dist_map.get(k)) {
+                    if i_inner_map[k] != u64::MAX && k_inner_map[j] != u64::MAX {
+                        let new_val = i_inner_map[k] + k_inner_map[j];
+                        if new_val < i_inner_map[j] {
+                            if let Some(i_inner_map) = dist_map.get_mut(i) {
+                                i_inner_map.insert(*j, new_val);
+                            }
+                        }
+                    };
+                }
+            }
+        }
+    }
+    dist_map
+}
+
+type Cache = HashMap<(u64, u64, u64, bool), u64>;
+
+fn evaluate(input: &str, time: u64, firstrun: bool) -> u64 {
+    let data = parse(input);
+    // dbg!(&data);
+    let dist_map = shortest_path(data.iter().map(|(k, v)| (*k, v.1.clone())).collect());
+    let keys: Vec<u64> = data.keys().cloned().collect();
+    let flow: HashMap<u64, u64> = data.iter().map(|(k, v)| (*k, v.0)).collect();
+
+    let mut cache = HashMap::new();
+    dfs(
+        &keys, &flow, &dist_map, time, &mut cache, 1, time, 0, firstrun,
+    )
+}
+
+fn dfs(
+    keys: &Vec<u64>,
+    flow: &HashMap<u64, u64>,
+    dist_map: &HashMap<u64, HashMap<u64, u64>>,
+    time: u64,
+    cache: &Cache,
+    valve: u64,
+    minutes: u64,
+    open: u64,
+    firstrun: bool,
+) -> u64 {
+    let cache_key = (valve, minutes, open, firstrun);
+    if let Some(cached) = cache.get(&cache_key) {
+        return *cached;
+    }
+    let result = keys
+        .iter()
+        .filter(|k| {
+            !open & *k != 0
+                && flow.get(k).unwrap() > &0
+                && *dist_map.get(&valve).unwrap().get(k).unwrap() < minutes
+        })
+        .map(|k| {
+            let d = *dist_map.get(&valve).unwrap().get(k).unwrap() + 1;
+            let timeleft = minutes - d;
+            timeleft * flow.get(k).unwrap()
+                + dfs(
+                    keys,
+                    flow,
+                    dist_map,
+                    time,
+                    cache,
+                    *k,
+                    timeleft,
+                    open | *k,
+                    firstrun,
+                )
+        })
+        .fold(
+            if firstrun {
+                dfs(keys, flow, dist_map, time, cache, 1, time, 0, false)
+            } else {
+                0
+            },
+            |max, v| if max > v { max } else { v },
+        );
+
+    // Suck my dick rust why the fuck is a cache in a recursive function so hard
+    unsafe {
+        let pnt = cache as *const Cache;
+        let mut_pnt = pnt as *mut Cache;
+        (*mut_pnt).insert(cache_key, result);
+    }
+
+    result
+}
+
+pub fn part_a(input: &str) -> i64 {
+    evaluate(input, 30, false) as i64
 }
 
 pub fn part_b(input: &str) -> i64 {
-    parse(input);
-    panic!("Part B not implimented yet");
-}
-
-fn parse(input: &str) -> (HashMap<String, Valve>, Graph<String, ()>) {
-    let mut graph = Graph::new();
-    let map: HashMap<String, Valve> = input
-        .lines()
-        .map(|l| {
-            let (key, rate, t, l, v, leading_to) = scan_fmt!(
-                l,
-                r"Valve {} has flow rate={d}; {} {} to {} {/.+/}",
-                String,
-                u8,
-                String,
-                String,
-                String,
-                String
-            )
-            .unwrap();
-
-            let node = graph.add_node(key.clone());
-
-            (
-                key.clone(),
-                Valve {
-                    key,
-                    node,
-                    rate,
-                    leads_to: leading_to.split(", ").map(|s| s.to_owned()).collect(),
-                    time_to_nodes: vec![],
-                },
-            )
-        })
-        .collect();
-
-    map.values().for_each(|v| {
-        v.leads_to
-            .iter()
-            .map(|l| map.get(l).unwrap().node)
-            .for_each(|other| {
-                graph.add_edge(v.node, other, ());
-            })
-    });
-
-    (map, graph)
-}
-#[derive(Debug)]
-struct Valve {
-    key: String,
-    node: NodeIndex,
-    rate: u8,
-    leads_to: Vec<String>,
-    time_to_nodes: Vec<(String, i64)>,
+    evaluate(input, 26, true) as i64
 }
