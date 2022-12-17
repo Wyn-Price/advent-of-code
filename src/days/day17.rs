@@ -108,30 +108,14 @@ pub fn part_a(input: &str) -> i64 {
             y: top_y - 3 - shape_height(&shape),
         };
 
-        // println!("{r}: ");
-        // let h = shape_height(&shape);
-        // println!(" - {h}");
-        // debug_print(&space, &s);
         loop {
-            // println!("V");
-            // debug_print(&space, &s);
-
             let g = next_gas();
             let d = if g { 1 } else { -1 };
             s.move_if_possible(&space, d, 0);
 
-            // if g {
-            //     println!(">");
-            // } else {
-            //     println!("<");
-            // }
-
             if !s.move_if_possible(&space, 0, 1) {
-                // debug_print(&space, &s);
                 break;
             }
-
-            // debug_print(&space, &s);
         }
 
         for y in 0..4 {
@@ -148,36 +132,10 @@ pub fn part_a(input: &str) -> i64 {
     (space.len() - top_y) as i64
 }
 
-fn debug_print(space: &Vec<Vec<bool>>, s: &ShapeInstance) {
-    for y in 0..space.len() {
-        for x in 0..7 {
-            if y >= s.y && x >= s.x {
-                let sy = y - s.y;
-                let sx = x - s.x;
-
-                if sy < 4 && sx < 4 {
-                    if s.shape[sy][sx] {
-                        print!("@");
-                        continue;
-                    }
-                }
-            }
-
-            if space[y][x] {
-                print!("#")
-            } else {
-                print!(".")
-            }
-        }
-        println!()
-    }
-    println!()
-}
-
 pub fn part_b(input: &str) -> i64 {
     panic!("Part B not implimented yet");
 }
 
 fn parse(input: &str) -> Vec<bool> {
-    input.chars().map(|c| c == '>').collect()
+    input.trim().chars().map(|c| c == '>').collect()
 }
