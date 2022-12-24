@@ -8,16 +8,11 @@ const DOWN: Dir = (0, 1);
 const LEFT: Dir = (-1, 0);
 const RIGHT: Dir = (1, 0);
 const NONE: Dir = (0, 0);
+
 #[derive(PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
 struct Blizzard {
     position: Pos,
     direction: Dir
-}
-
-#[derive(PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
-struct GameState {
-    position: Pos,
-    // blizzards: Vec<Blizzard>
 }
 
 #[derive(PartialEq)]
@@ -31,7 +26,7 @@ fn compute(input: &str, break_on_state: State) -> i64 {
 
     let (mut blizzards, width, height, start, end) = parse(input);
 
-    let mut game_states = vec![GameState{ position: start }];
+    let mut game_states = vec![start];
     let mut begin = start;
     let mut target = end;
 
@@ -63,8 +58,8 @@ fn compute(input: &str, break_on_state: State) -> i64 {
         for game in &game_states {
             for dir in vec![DOWN, RIGHT, UP, LEFT, NONE] {
                 let new_pos = (
-                    game.position.0 + dir.0 as i64,
-                    game.position.1 + dir.1 as i64,
+                    game.0 + dir.0 as i64,
+                    game.1 + dir.1 as i64,
                 );
                 if target.eq(&new_pos) {
                     finished = true;
@@ -78,9 +73,7 @@ fn compute(input: &str, break_on_state: State) -> i64 {
                     }
                    }
 
-                new_game_states.insert(GameState {
-                    position: new_pos,
-                });
+                new_game_states.insert(new_pos);
             }
         }
 
@@ -93,13 +86,13 @@ fn compute(input: &str, break_on_state: State) -> i64 {
             match state {
                 State::First => {
                     state = State::GoBackForSnacks;
-                    game_states = vec![GameState{ position: end }];
+                    game_states = vec![ end];
                     begin = end;
                     target = start;
                 },
                 State::GoBackForSnacks => {
                     state = State::ComeBackWithSnacks;
-                    game_states = vec![GameState{ position: start }];
+                    game_states = vec![ start ];
                     begin = start;
                     target = end;
                 },
