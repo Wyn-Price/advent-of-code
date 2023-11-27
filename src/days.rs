@@ -1,6 +1,14 @@
 use crate::Part;
 
-mod day1;
+mod day01;
+mod day02;
+mod day03;
+mod day04;
+mod day05;
+mod day06;
+mod day07;
+mod day08;
+mod day09;
 mod day10;
 mod day11;
 mod day12;
@@ -11,31 +19,23 @@ mod day16;
 mod day17;
 mod day18;
 mod day19;
-mod day2;
 mod day20;
 mod day21;
 mod day22;
 mod day23;
 mod day24;
 mod day25;
-mod day3;
-mod day4;
-mod day5;
-mod day6;
-mod day7;
-mod day8;
-mod day9;
 
 static DAY_PARTS: [[for<'r> fn(&'r str) -> i64; 2]; 25] = [
-    [day1::part_a, day1::part_b],
-    [day2::part_a, day2::part_b],
-    [day3::part_a, day3::part_b],
-    [day4::part_a, day4::part_b],
-    [day5::part_a, day5::part_b],
-    [day6::part_a, day6::part_b],
-    [day7::part_a, day7::part_b],
-    [day8::part_a, day8::part_b],
-    [day9::part_a, day9::part_b],
+    [day01::part_a, day01::part_b],
+    [day02::part_a, day02::part_b],
+    [day03::part_a, day03::part_b],
+    [day04::part_a, day04::part_b],
+    [day05::part_a, day05::part_b],
+    [day06::part_a, day06::part_b],
+    [day07::part_a, day07::part_b],
+    [day08::part_a, day08::part_b],
+    [day09::part_a, day09::part_b],
     [day10::part_a, day10::part_b],
     [day11::part_a, day11::part_b],
     [day12::part_a, day12::part_b],
