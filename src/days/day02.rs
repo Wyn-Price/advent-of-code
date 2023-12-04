@@ -3,14 +3,14 @@ use regex::Regex;
 pub fn part_a(input: &str) -> i64 {
     parse(input)
         .into_iter()
-        .filter(|&(game, r, g, b)| r <= 12 && g <= 13 && b <= 14)
-        .fold(0, |acc, (game, r, g, b)| acc + game) as i64
+        .filter(|&(_, r, g, b)| r <= 12 && g <= 13 && b <= 14)
+        .fold(0, |acc, (game, _, _, _)| acc + game) as i64
 }
 
 pub fn part_b(input: &str) -> i64 {
     parse(input)
         .into_iter()
-        .fold(0, |acc, (game, r, g, b)| acc + (r * g * b)) as i64
+        .fold(0, |acc, (_, r, g, b)| acc + (r * g * b)) as i64
 }
 
 fn parse(input: &str) -> Vec<(i32, i32, i32, i32)> {
