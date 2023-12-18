@@ -1,5 +1,5 @@
 use core::panic;
-use std::collections::{BinaryHeap, HashMap};
+use std::collections::HashMap;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, PartialOrd, Ord, Hash)]
 enum Dir {
