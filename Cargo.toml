@@ -1,5 +1,5 @@
 [package]
-name = "aoc2021"
+name = "aoc"
 version = "0.1.0"
 edition = "2021"
 
@@ -9,3 +9,4 @@ edition = "2021"
 reqwest = "0.11.13"
 tokio = { version = "1.22.0", features = ["full"] }
 regex = "1"
+chrono = "0.4.39"
