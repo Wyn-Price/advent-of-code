@@ -1,12 +1,14 @@
 #![feature(array_chunks)]
 #![feature(iter_array_chunks)]
-
+#![feature(int_roundings)]
+#![feature(array_windows)]
 extern crate chrono;
+extern crate scan_fmt;
+
 mod years;
 
-use std::fs;
-
 use chrono::Datelike;
+use std::fs;
 
 #[tokio::main]
 async fn main() {
