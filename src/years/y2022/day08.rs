@@ -1,4 +1,4 @@
-use std::{collections::HashSet, vec};
+use std::collections::HashSet;
 
 pub fn part_a(input: &str) -> i64 {
     let heights = parse(input);

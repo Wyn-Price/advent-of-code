@@ -23,8 +23,8 @@ pub fn part_b(input: &str) -> i64 {
 
     let mut idx_vec = vec.into_iter().enumerate().collect::<Vec<_>>();
 
-    let aIdx = idx_vec.len() - 2;
-    let bIdx = idx_vec.len() - 1;
+    let a_idx = idx_vec.len() - 2;
+    let b_idx = idx_vec.len() - 1;
 
     idx_vec.sort_by(|(_, a), (_, b)| {
         if cmp_list(&a, &b).unwrap_or(true) {
@@ -34,8 +34,8 @@ pub fn part_b(input: &str) -> i64 {
         }
     });
 
-    let aid = idx_vec.iter().position(|&(id, _)| id == aIdx).unwrap() as i64 + 1;
-    let bid = idx_vec.iter().position(|&(id, _)| id == bIdx).unwrap() as i64 + 1;
+    let aid = idx_vec.iter().position(|&(id, _)| id == a_idx).unwrap() as i64 + 1;
+    let bid = idx_vec.iter().position(|&(id, _)| id == b_idx).unwrap() as i64 + 1;
     aid * bid
 }
 

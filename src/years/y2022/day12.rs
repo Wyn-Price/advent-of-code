@@ -13,7 +13,7 @@ pub fn part_a(input: &str) -> i64 {
 }
 
 pub fn part_b(input: &str) -> i64 {
-    let (mut graph, start, end, node_datas) = parse(input);
+    let (mut graph, _, end, node_datas) = parse(input);
     graph.reverse();
 
     let path = dijkstra(&graph, end, None, |_| 1);
@@ -23,7 +23,7 @@ pub fn part_b(input: &str) -> i64 {
     let min = node_datas
         .iter()
         .filter(|&(_, val)| *val == 1)
-        .filter_map(|(idx, val)| path.get(idx))
+        .filter_map(|(idx, _)| path.get(idx))
         .min()
         .unwrap();
 

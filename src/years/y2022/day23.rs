@@ -105,6 +105,7 @@ fn compute_next_pos(
     return None;
 }
 
+#[allow(dead_code)]
 fn debug_print(elves: &HashSet<Pos>) {
     let min_x = *elves.iter().map(|(x, _)| x).min().unwrap();
     let min_y = *elves.iter().map(|(_, y)| y).min().unwrap();

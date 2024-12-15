@@ -62,7 +62,7 @@ fn parse(input: &str) -> Vec<Command> {
                         .skip(1)
                         .filter(|&f| !f.starts_with("dir"))
                         .map(|f| {
-                            let (size, file) = f.split_once(" ").unwrap();
+                            let (size, _) = f.split_once(" ").unwrap();
                             return size.parse().unwrap();
                         })
                         .collect(),

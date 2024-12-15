@@ -7,7 +7,7 @@ pub fn part_a(input: &str) -> i64 {
     let mut robots = parse(input);
     let w = 101;
     let h = 103;
-    for i in 0..100 {
+    for _ in 0..100 {
         for robot in &mut robots {
             robot.pos.0 += robot.vel.0;
             if robot.pos.0 >= w {
