@@ -9,6 +9,18 @@ macro_rules! macro_create_day {
 }
 
 #[macro_export]
+macro_rules! macro_create_year_mod {
+    ($year:tt) => {
+        paste! {
+            mod [<y $year>] {
+                use crate::macro_import_year;
+                macro_import_year!();
+            }
+        }
+    };
+}
+
+#[macro_export]
 macro_rules! macro_import_year {
     () => {
         use std::fmt::Display;

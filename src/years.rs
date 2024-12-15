@@ -1,25 +1,12 @@
-use crate::Part;
+use crate::{macro_create_year_mod, Part};
 
-mod base;
-mod y2021 {
-    use crate::macro_import_year;
-    macro_import_year!();
-}
+mod macros;
 
-mod y2022 {
-    use crate::macro_import_year;
-    macro_import_year!();
-}
-
-mod y2023 {
-    use crate::macro_import_year;
-    macro_import_year!();
-}
-
-mod y2024 {
-    use crate::macro_import_year;
-    macro_import_year!();
-}
+use paste::paste;
+macro_create_year_mod!(2021);
+macro_create_year_mod!(2022);
+macro_create_year_mod!(2023);
+macro_create_year_mod!(2024);
 
 pub fn run(year: i32, day: i32, part: Part, input: &str) {
     match year {
