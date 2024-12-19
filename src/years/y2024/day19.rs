@@ -1,6 +1,7 @@
-use std::collections::HashMap;
+use std::rc::Rc;
 
 use itertools::Itertools;
+use memoize::memoize;
 use regex::Regex;
 
 pub fn part_a(input: &str) -> usize {
@@ -12,59 +13,28 @@ pub fn part_a(input: &str) -> usize {
 
 pub fn part_b(input: &str) -> i64 {
     let (ava, towels) = parse(input);
+    let available = Rc::new(ava.into_iter().map(|a| a.to_string()).collect_vec());
+
     towels
         .into_iter()
         .enumerate()
         .map(|(i, t)| {
             println!("Starting {i}");
-            let mut lefts = vec![t];
-            let mut done = 0;
-            let mut cache = HashMap::new();
-            while let Some(left) = lefts.pop() {
-                get_options(&ava, left).iter().for_each(|&o| match o {
-                    None => done += 1,
-                    Some(l) => {
-                        if l.len() > t.len() / 2 {
-                            lefts.push(l);
-                            return;
-                        }
-
-                        done += *cache
-                            .entry(l.to_string())
-                            .or_insert_with(|| compute_directly(&ava, l));
-                    }
-                });
-            }
-            return done;
+            return count(available.clone(), t.to_string());
         })
         .sum()
 }
 
-fn compute_directly(ava: &Vec<&str>, l: &str) -> i64 {
-    // If 10 left, just compute and cache
-    let mut lefts = vec![l];
-    let mut done_10 = 0;
-    while let Some(left) = lefts.pop() {
-        get_options(&ava, left).iter().for_each(|&o| match o {
-            None => done_10 += 1,
-            Some(l) => lefts.push(l),
-        });
+#[memoize]
+fn count(available: Rc<Vec<String>>, towel: String) -> i64 {
+    if towel.is_empty() {
+        return 1;
     }
-    return done_10;
-}
-
-fn get_options<'a>(ava: &'a Vec<&'a str>, left: &'a str) -> Vec<Option<&'a str>> {
-    ava.iter()
-        .filter(|&a| left.starts_with(a))
-        .map(|a| {
-            let new_left = &left[a.len()..];
-            if new_left.is_empty() {
-                None
-            } else {
-                Some(new_left)
-            }
-        })
-        .collect_vec()
+    return available
+        .iter()
+        .filter(|&p| towel.starts_with(p))
+        .map(|p| count(available.clone(), towel[p.len()..].to_string()))
+        .sum();
 }
 
 // #[derive(Debug)]
