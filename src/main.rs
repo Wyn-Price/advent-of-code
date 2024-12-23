@@ -70,7 +70,7 @@ async fn download_input(year: i32, day: i32) -> Result<String, reqwest::Error> {
     let session = fs::read_to_string(".session").expect("Unable to read session token from file");
     reqwest::Client::new()
         .get(format!("https://adventofcode.com/{year}/day/{day}/input"))
-        .header("Cookie", format!("session={session}"))
+        .header("Cookie", format!("session={}", session.trim()))
         .send()
         .await?
         .text()
