@@ -1,7 +1,8 @@
 #![feature(array_chunks)]
-#![feature(iter_array_chunks)]
-#![feature(int_roundings)]
 #![feature(array_windows)]
+#![feature(duration_millis_float)]
+#![feature(int_roundings)]
+#![feature(iter_array_chunks)]
 extern crate chrono;
 extern crate scan_fmt;
 

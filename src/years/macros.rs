@@ -24,6 +24,7 @@ macro_rules! macro_create_year_mod {
 macro_rules! macro_import_year {
     () => {
         use std::fmt::Display;
+        use std::time::Instant;
 
         use crate::macro_create_day;
         use crate::Part;
@@ -91,14 +92,24 @@ macro_rules! macro_import_year {
             let mut to_submit = vec![];
 
             if part.is_a() {
+                let start = Instant::now();
                 let res = current_day[0](input);
-                println!("Day {day} part A returned: {res}");
+                let elapsed = start.elapsed();
+                println!(
+                    "Day {day} part A returned: {res} in {}ms",
+                    elapsed.as_millis_f32()
+                );
                 to_submit.push((Part::A, format!("{res}")));
             }
 
             if part.is_b() {
+                let start = Instant::now();
                 let res = current_day[1](input);
-                println!("Day {day} part B returned: {res}");
+                let elapsed = start.elapsed();
+                println!(
+                    "Day {day} part B returned: {res} in {}ms",
+                    elapsed.as_millis_f32()
+                );
                 to_submit.push((Part::B, format!("{res}")));
             }
 
