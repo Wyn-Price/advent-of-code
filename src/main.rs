@@ -5,9 +5,12 @@
 extern crate chrono;
 extern crate scan_fmt;
 
+mod aoc;
 mod years;
 
 use chrono::Datelike;
+use dialoguer::Confirm;
+use regex::Regex;
 use std::fs;
 
 #[tokio::main]
@@ -54,7 +57,7 @@ async fn main() {
         Ok(f) => f.to_owned(),
         Err(err) => {
             println!("Unable to find file {path}: {err}. Attempting download.");
-            let str = download_input(year, day)
+            let str = aoc::download_input(year, day)
                 .await
                 .expect("Error while downloading input");
             fs::create_dir_all(dir).expect(&format!("Unable to create dir {dir}"));
@@ -63,18 +66,16 @@ async fn main() {
         }
     };
 
-    years::run(year, day, part, &input);
-}
-
-async fn download_input(year: i32, day: i32) -> Result<String, reqwest::Error> {
-    let session = fs::read_to_string(".session").expect("Unable to read session token from file");
-    reqwest::Client::new()
-        .get(format!("https://adventofcode.com/{year}/day/{day}/input"))
-        .header("Cookie", format!("session={}", session.trim()))
-        .send()
-        .await?
-        .text()
-        .await
+    for (part, to_submit) in years::run(year, day, part, &input) {
+        let confirmation = Confirm::new()
+            .with_prompt(format!("Do you want to submit {to_submit}?"))
+            .interact()
+            .unwrap();
+        if confirmation {
+            let (raw, response) = aoc::submit_part(year, day, part, to_submit).await.unwrap();
+            println!("{}", response.pretty_text());
+        }
+    }
 }
 
 pub enum Part {

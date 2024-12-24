@@ -86,18 +86,23 @@ macro_rules! macro_import_year {
             ]
         }
 
-        pub fn run(day: i32, part: Part, input: &str) {
+        pub fn run(day: i32, part: Part, input: &str) -> Vec<(Part, String)> {
             let current_day = &questions()[day as usize - 1];
+            let mut to_submit = vec![];
 
             if part.is_a() {
                 let res = current_day[0](input);
                 println!("Day {day} part A returned: {res}");
+                to_submit.push((Part::A, format!("{res}")));
             }
 
             if part.is_b() {
                 let res = current_day[1](input);
                 println!("Day {day} part B returned: {res}");
+                to_submit.push((Part::B, format!("{res}")));
             }
+
+            return to_submit;
         }
     };
 }
