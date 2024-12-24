@@ -20,7 +20,7 @@ pub async fn submit_part(
     day: i32,
     part: Part,
     answer: String,
-) -> Result<(String, Response), reqwest::Error> {
+) -> Result<String, reqwest::Error> {
     let level = match part {
         Part::A => "1",
         Part::B => "2",
@@ -44,8 +44,7 @@ pub async fn submit_part(
         .as_str()
         .to_owned();
 
-    let res = Response::best_guess(&body);
-    Ok((body, res))
+    return Ok(body);
 }
 
 #[derive(Debug)]
@@ -58,10 +57,10 @@ pub enum Response {
 }
 
 impl Response {
-    pub fn best_guess(body: &str) -> Self {
+    pub fn best_guess(body: &str) -> Option<Self> {
         // You don't seem to be solving the right level.
-        if body.starts_with("(?i)You don't seem to be solving the right level.") {
-            return Self::WrongLevel;
+        if body.starts_with("You don't seem to be solving the right level.") {
+            return Some(Self::WrongLevel);
         }
 
         let wrong_answer_re =
@@ -73,27 +72,28 @@ impl Response {
                 .filter(|s| !s.is_empty());
             let to_wait = Regex::new("(?i)Please wait(.+)before trying again")
                 .unwrap()
-                .captures(body)
-                .unwrap()
+                .captures(body)?
                 .get(1)
                 .unwrap()
                 .as_str()
                 .trim()
                 .to_owned();
-            return Self::WrongAnswer(hint, to_wait);
+            return Some(Self::WrongAnswer(hint, to_wait));
         }
 
         let ratelimit_re = Regex::new(r"(?i)You gave an answer too recently; you have to wait after submitting an answer before trying again.\s+You have(.+)left to wait.").unwrap();
         if let Some(caps) = ratelimit_re.captures(body) {
-            return Self::RateLimited(caps.get(1).unwrap().as_str().trim().to_owned());
+            return Some(Self::RateLimited(
+                caps.get(1).unwrap().as_str().trim().to_owned(),
+            ));
         }
 
         let correct_re = Regex::new("(?i)That's the right answer!").unwrap();
         if correct_re.is_match(body) {
-            return Self::Corret;
+            return Some(Self::Corret);
         }
 
-        return Self::Other(body.to_owned());
+        return Some(Self::Other(body.to_owned()));
     }
 
     pub fn pretty_text(&self) -> String {
@@ -113,7 +113,7 @@ impl Response {
                     + &format!("Wait {}.", time).red().to_string()
             }
             Self::Corret => "Correct!".bold().green().to_string(),
-            Self::Other(text) => "Unknown".bright_black().to_string() + text,
+            Self::Other(text) => "Unknown ".bright_black().to_string() + text,
         }
     }
 }

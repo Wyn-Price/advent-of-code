@@ -10,7 +10,6 @@ mod years;
 
 use chrono::Datelike;
 use dialoguer::Confirm;
-use regex::Regex;
 use std::fs;
 
 #[tokio::main]
@@ -72,7 +71,9 @@ async fn main() {
             .interact()
             .unwrap();
         if confirmation {
-            let (raw, response) = aoc::submit_part(year, day, part, to_submit).await.unwrap();
+            let text = aoc::submit_part(year, day, part, to_submit).await.unwrap();
+            let response = aoc::Response::best_guess(&text)
+                .unwrap_or(aoc::Response::Other(format!("Unable to guess: {}", text)));
             println!("{}", response.pretty_text());
         }
     }
