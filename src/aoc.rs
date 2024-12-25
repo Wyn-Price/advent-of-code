@@ -35,7 +35,7 @@ pub async fn submit_part(
         .text()
         .await?;
 
-    let re = Regex::new("<article><p>(.+)</p></article>").unwrap();
+    let re = Regex::new(r"(?s)<article>(.+)</article>").unwrap();
     let body = re
         .captures(&text)
         .expect(&format!("Unknown HTML {text}"))
@@ -53,13 +53,16 @@ pub enum Response {
     WrongAnswer(Option<String>, String),
     RateLimited(String),
     Corret,
+    Finished,
     Other(String),
 }
 
 impl Response {
     pub fn best_guess(body: &str) -> Option<Self> {
         // You don't seem to be solving the right level.
-        if body.starts_with("You don't seem to be solving the right level.") {
+        let wrong_level_re =
+            Regex::new(r"(?i)You don't seem to be solving the right level").unwrap();
+        if wrong_level_re.is_match(body) {
             return Some(Self::WrongLevel);
         }
 
@@ -93,6 +96,12 @@ impl Response {
             return Some(Self::Corret);
         }
 
+        let finished_re =
+            Regex::new(r"(?i)You've finished every puzzle in Advent of Code").unwrap();
+        if finished_re.is_match(body) {
+            return Some(Self::Finished);
+        }
+
         return Some(Self::Other(body.to_owned()));
     }
 
@@ -113,6 +122,11 @@ impl Response {
                     + &format!("Wait {}.", time).red().to_string()
             }
             Self::Corret => "Correct!".bold().green().to_string(),
+            Self::Finished => "Correct - All Finished!"
+                .bold()
+                .green()
+                .underline()
+                .to_string(),
             Self::Other(text) => "Unknown ".bright_black().to_string() + text,
         }
     }
