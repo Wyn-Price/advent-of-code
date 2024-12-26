@@ -11,7 +11,7 @@ macro_create_year_mod!(2023);
 macro_create_year_mod!(2024);
 // insert: new year create
 
-pub fn run(year: i32, day: i32, part: Part, input: &str) -> Vec<(Part, String)> {
+pub fn run(year: i32, day: i32, part: Part, input: &str) -> (Part, String) {
     match year {
         2015 => y2015::run(day, part, input),
 

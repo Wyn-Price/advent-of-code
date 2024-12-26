@@ -11,7 +11,8 @@ mod years;
 
 use chrono::Datelike;
 use dialoguer::Confirm;
-use std::fs;
+use std::{fs, sync::Arc, time::Duration};
+use tokio::sync::Notify;
 
 #[tokio::main]
 async fn main() {
@@ -66,20 +67,67 @@ async fn main() {
         }
     };
 
-    for (part, to_submit) in years::run(year, day, part, &input) {
-        // Auto submit day 25 part b
-        let confirmation = (day == 25 && part == Part::B)
-            || Confirm::new()
-                .with_prompt(format!("Do you want to submit {to_submit}?"))
-                .interact()
-                .unwrap();
-        if confirmation {
-            let text = aoc::submit_part(year, day, part, to_submit).await.unwrap();
-            let response = aoc::Response::best_guess(&text)
-                .unwrap_or(aoc::Response::Other(format!("Unable to guess: {}", text)));
+    let (part, to_submit) = years::run(year, day, part, &input);
+    let confirmation = Confirm::new()
+        .with_prompt(format!("Do you want to submit {to_submit}?"))
+        .interact()
+        .unwrap();
+    if confirmation {
+        if day == 25 && part == Part::A {
+            minimum_delta_day_25_submit(year, to_submit).await;
+        } else {
+            let response = aoc::submit_part(year, day, part, to_submit).await.unwrap();
             println!("{}", response.pretty_text());
         }
     }
+}
+
+pub async fn minimum_delta_day_25_submit(year: i32, to_submit: String) {
+    let done_a = Arc::new(Notify::new());
+    let done_b = Arc::new(Notify::new());
+
+    let done_a_cloned = done_a.clone();
+    tokio::spawn(async move {
+        println!("Sending 25 Part A");
+        let response = aoc::submit_part(year, 25, Part::A, to_submit)
+            .await
+            .unwrap();
+        println!("25 Part A: {}", response.pretty_text());
+        done_a_cloned.notify_one();
+    });
+
+    let done_a_cloned = done_a.clone();
+    let mut interval = tokio::time::interval(Duration::from_millis(100));
+    let mut handles = vec![];
+    let mut i = 0;
+    loop {
+        i += 1;
+
+        let done_b_cloned = done_b.clone();
+        handles.push(tokio::spawn(async move {
+            println!("Sending 25 Part B {i}");
+            let response = match aoc::submit_part(year, 25, Part::B, "0".to_owned()).await {
+                Ok(r) => r,
+                Err(e) => aoc::Response::Other(e.to_string()),
+            };
+            if response == aoc::Response::Finished {
+                done_b_cloned.notify_one();
+            }
+            println!("25 Part B {i}: {}", response.pretty_text());
+        }));
+
+        if tokio::select! {
+            _ = done_a_cloned.notified() => { true },
+            _ = interval.tick() => { false },
+        } {
+            break;
+        };
+    }
+
+    let done_b_cloned = done_b.clone();
+    done_b_cloned.notified().await;
+
+    handles.iter().for_each(|h| h.abort());
 }
 
 #[derive(Debug, PartialEq)]

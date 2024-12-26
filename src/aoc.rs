@@ -20,7 +20,7 @@ pub async fn submit_part(
     day: i32,
     part: Part,
     answer: String,
-) -> Result<String, reqwest::Error> {
+) -> Result<Response, reqwest::Error> {
     let level = match part {
         Part::A => "1",
         Part::B => "2",
@@ -44,10 +44,10 @@ pub async fn submit_part(
         .as_str()
         .to_owned();
 
-    return Ok(body);
+    return Ok(Response::best_guess(&body));
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Response {
     WrongLevel,
     WrongAnswer(Option<String>, String),
@@ -58,12 +58,12 @@ pub enum Response {
 }
 
 impl Response {
-    pub fn best_guess(body: &str) -> Option<Self> {
+    pub fn best_guess(body: &str) -> Self {
         // You don't seem to be solving the right level.
         let wrong_level_re =
             Regex::new(r"(?i)You don't seem to be solving the right level").unwrap();
         if wrong_level_re.is_match(body) {
-            return Some(Self::WrongLevel);
+            return Self::WrongLevel;
         }
 
         let wrong_answer_re =
@@ -75,34 +75,33 @@ impl Response {
                 .filter(|s| !s.is_empty());
             let to_wait = Regex::new("(?i)Please wait(.+)before trying again")
                 .unwrap()
-                .captures(body)?
+                .captures(body)
+                .unwrap()
                 .get(1)
                 .unwrap()
                 .as_str()
                 .trim()
                 .to_owned();
-            return Some(Self::WrongAnswer(hint, to_wait));
+            return Self::WrongAnswer(hint, to_wait);
         }
 
         let ratelimit_re = Regex::new(r"(?i)You gave an answer too recently; you have to wait after submitting an answer before trying again.\s+You have(.+)left to wait.").unwrap();
         if let Some(caps) = ratelimit_re.captures(body) {
-            return Some(Self::RateLimited(
-                caps.get(1).unwrap().as_str().trim().to_owned(),
-            ));
+            return Self::RateLimited(caps.get(1).unwrap().as_str().trim().to_owned());
         }
 
         let correct_re = Regex::new("(?i)That's the right answer!").unwrap();
         if correct_re.is_match(body) {
-            return Some(Self::Corret);
+            return Self::Corret;
         }
 
         let finished_re =
             Regex::new(r"(?i)You've finished every puzzle in Advent of Code").unwrap();
         if finished_re.is_match(body) {
-            return Some(Self::Finished);
+            return Self::Finished;
         }
 
-        return Some(Self::Other(body.to_owned()));
+        return Self::Other(body.to_owned());
     }
 
     pub fn pretty_text(&self) -> String {

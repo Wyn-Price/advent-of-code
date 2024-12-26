@@ -87,10 +87,10 @@ macro_rules! macro_import_year {
             ]
         }
 
-        pub fn run(day: i32, part: Part, input: &str) -> Vec<(Part, String)> {
+        pub fn run(day: i32, part: Part, input: &str) -> (Part, String) {
             let current_day = &questions()[day as usize - 1];
-            let mut to_submit = vec![];
 
+            let mut to_submit = None;
             if part.is_a() {
                 let start = Instant::now();
                 let res = current_day[0](input);
@@ -99,7 +99,7 @@ macro_rules! macro_import_year {
                     "Day {day} part A returned: {res} in {}ms",
                     elapsed.as_millis_f32()
                 );
-                to_submit.push((Part::A, format!("{res}")));
+                to_submit = Some((Part::A, format!("{res}")));
             }
 
             if part.is_b() {
@@ -110,15 +110,10 @@ macro_rules! macro_import_year {
                     "Day {day} part B returned: {res} in {}ms",
                     elapsed.as_millis_f32()
                 );
-                to_submit.push((Part::B, format!("{res}")));
+                to_submit = Some((Part::B, format!("{res}")));
             }
 
-            // Auto submit day 25 part b
-            if day == 25 {
-                to_submit.push((Part::B, "0".to_owned()));
-            }
-
-            return to_submit;
+            return to_submit.unwrap();
         }
     };
 }
