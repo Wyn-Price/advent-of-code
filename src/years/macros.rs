@@ -113,6 +113,11 @@ macro_rules! macro_import_year {
                 to_submit.push((Part::B, format!("{res}")));
             }
 
+            // Auto submit day 25 part b
+            if day == 25 {
+                to_submit.push((Part::B, "0".to_owned()));
+            }
+
             return to_submit;
         }
     };

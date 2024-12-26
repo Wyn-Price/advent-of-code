@@ -67,10 +67,12 @@ async fn main() {
     };
 
     for (part, to_submit) in years::run(year, day, part, &input) {
-        let confirmation = Confirm::new()
-            .with_prompt(format!("Do you want to submit {to_submit}?"))
-            .interact()
-            .unwrap();
+        // Auto submit day 25 part b
+        let confirmation = (day == 25 && part == Part::B)
+            || Confirm::new()
+                .with_prompt(format!("Do you want to submit {to_submit}?"))
+                .interact()
+                .unwrap();
         if confirmation {
             let text = aoc::submit_part(year, day, part, to_submit).await.unwrap();
             let response = aoc::Response::best_guess(&text)
@@ -80,6 +82,7 @@ async fn main() {
     }
 }
 
+#[derive(Debug, PartialEq)]
 pub enum Part {
     A,
     B,
