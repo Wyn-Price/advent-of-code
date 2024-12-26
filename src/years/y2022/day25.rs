@@ -4,10 +4,6 @@ pub fn part_a(input: &str) -> i64 {
     0
 }
 
-pub fn part_b(_input: &str) -> i64 {
-    panic!("Merry christmas");
-}
-
 fn parse(input: &str) -> Vec<i64> {
     input.trim().lines().map(|l| snafu_to_dec(l)).collect()
 }

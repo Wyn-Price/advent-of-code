@@ -58,10 +58,6 @@ fn remove_most_used(mut graph: Board) -> Board {
     return graph;
 }
 
-pub fn part_b(_input: &str) -> i64 {
-    panic!("Merry christmas");
-}
-
 fn parse(input: &str) -> Board {
     let mut graph = Graph::new_undirected();
     let mut nodes = HashMap::new();

@@ -17,10 +17,6 @@ pub fn part_a(input: &str) -> i64 {
         .count() as i64
 }
 
-pub fn part_b(_: &str) -> i32 {
-    0
-}
-
 fn parse(input: &str) -> (Vec<Vec<i32>>, Vec<Vec<i32>>) {
     let mut locks = vec![];
     let mut keys = vec![];

@@ -83,7 +83,10 @@ macro_rules! macro_import_year {
                 macro_create_day!(day22),
                 macro_create_day!(day23),
                 macro_create_day!(day24),
-                macro_create_day!(day25),
+                [
+                    Box::new(|i| Box::new(day25::part_a(i))),
+                    Box::new(|_| Box::new("0".to_owned())),
+                ],
             ]
         }
 
