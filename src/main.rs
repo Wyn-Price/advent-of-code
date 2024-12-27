@@ -12,8 +12,7 @@ mod years;
 use chrono::Datelike;
 use colored::Colorize;
 use dialoguer::Confirm;
-use reqwest::Response;
-use std::{fs, sync::Arc, thread::sleep, time::Duration};
+use std::{fs, sync::Arc, time::Duration};
 use tokio::sync::Notify;
 
 #[tokio::main]
@@ -94,8 +93,15 @@ async fn main() {
                 break response;
             };
 
-            if part == Part::A && response == aoc::Response::Corret {
-                open::that(format!("https://adventofcode.com/{year}/day/{day}#part2")).unwrap();
+            if response == aoc::Response::Corret {
+                let url = match part {
+                    Part::A => format!("https://adventofcode.com/{year}/day/{day}#part2"),
+                    Part::B => {
+                        format!("https://adventofcode.com/{year}/leaderboard/private/view/413619")
+                    }
+                    _ => panic!("Invalid part {part:?}"),
+                };
+                open::that(url).unwrap();
             }
         }
     }
