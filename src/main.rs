@@ -10,8 +10,10 @@ mod aoc;
 mod years;
 
 use chrono::Datelike;
+use colored::Colorize;
 use dialoguer::Confirm;
-use std::{fs, sync::Arc, time::Duration};
+use reqwest::Response;
+use std::{fs, sync::Arc, thread::sleep, time::Duration};
 use tokio::sync::Notify;
 
 #[tokio::main]
@@ -67,7 +69,7 @@ async fn main() {
         }
     };
 
-    let (part, to_submit) = years::run(year, day, part, &input);
+    let (part, to_submit) = years::run(year, day, part, &input.trim());
     let confirmation = Confirm::new()
         .with_prompt(format!("Do you want to submit {to_submit}?"))
         .interact()
@@ -76,13 +78,42 @@ async fn main() {
         if day == 25 && part == Part::A {
             minimum_delta_day_25_submit(year, to_submit).await;
         } else {
-            let response = aoc::submit_part(year, day, part, to_submit).await.unwrap();
-            println!("{}", response.pretty_text());
+            let response = 'main: loop {
+                let response = aoc::submit_part(year, day, part, to_submit.clone())
+                    .await
+                    .unwrap();
+                println!("{}", response.pretty_text());
+
+                if let aoc::Response::RateLimited(_, time_o) = response {
+                    if let Some(time) = time_o {
+                        ratelimit_wait(time).await;
+                        continue 'main;
+                    }
+                }
+
+                break response;
+            };
+
+            if part == Part::A && response == aoc::Response::Corret {
+                open::that(format!("https://adventofcode.com/{year}/day/{day}#part2")).unwrap();
+            }
         }
     }
 }
 
-pub async fn minimum_delta_day_25_submit(year: i32, to_submit: String) {
+async fn ratelimit_wait(time: u64) {
+    for i in 0..time {
+        tokio::time::sleep(Duration::from_secs(1)).await;
+        println!(
+            "{}",
+            format!(" - {}", aoc::seconds_to_str(time - i - 1))
+                .red()
+                .to_string()
+        )
+    }
+}
+
+async fn minimum_delta_day_25_submit(year: i32, to_submit: String) {
     let done_a = Arc::new(Notify::new());
     let done_b = Arc::new(Notify::new());
 
@@ -130,7 +161,7 @@ pub async fn minimum_delta_day_25_submit(year: i32, to_submit: String) {
     handles.iter().for_each(|h| h.abort());
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum Part {
     A,
     B,

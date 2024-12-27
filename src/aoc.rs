@@ -51,7 +51,7 @@ pub async fn submit_part(
 pub enum Response {
     WrongLevel,
     WrongAnswer(Option<String>, String),
-    RateLimited(String),
+    RateLimited(String, Option<u64>),
     Corret,
     Finished,
     Other(String),
@@ -87,7 +87,24 @@ impl Response {
 
         let ratelimit_re = Regex::new(r"(?i)You gave an answer too recently; you have to wait after submitting an answer before trying again.\s+You have(.+)left to wait.").unwrap();
         if let Some(caps) = ratelimit_re.captures(body) {
-            return Self::RateLimited(caps.get(1).unwrap().as_str().trim().to_owned());
+            let time = caps.get(1).unwrap().as_str().trim().to_owned();
+            let time_num = time
+                .split_whitespace()
+                .map(|c| {
+                    let l = c.len();
+                    let num: u64 = c[0..l - 1].parse().unwrap();
+                    match &c[l - 1..l] {
+                        "m" => Some(num * 60),
+                        "s" => Some(num),
+                        _ => {
+                            println!("Unknown time {c}");
+                            None
+                        }
+                    }
+                })
+                .collect::<Option<Vec<_>>>()
+                .map(|v| v.into_iter().sum());
+            return Self::RateLimited(time, time_num);
         }
 
         let correct_re = Regex::new("(?i)That's the right answer!").unwrap();
@@ -115,10 +132,12 @@ impl Response {
                 txt += &format!("\nWait: {}", ratelimit).yellow().to_string();
                 return txt;
             }
-            Self::RateLimited(time) => {
+            Self::RateLimited(time, time_s) => {
                 "Ratelimited!!".bold().red().underline().to_string()
                     + " "
-                    + &format!("Wait {}.", time).red().to_string()
+                    + &format!("Wait {}.", time_s.map_or(time.clone(), seconds_to_str))
+                        .red()
+                        .to_string()
             }
             Self::Corret => "Correct!".bold().green().to_string(),
             Self::Finished => "Correct - All Finished!"
@@ -129,6 +148,17 @@ impl Response {
             Self::Other(text) => "Unknown ".bright_black().to_string() + text,
         }
     }
+}
+
+pub fn seconds_to_str(t: u64) -> String {
+    let m = t / 60;
+    let s = t % 60;
+    let mut str = "".to_owned();
+    if m != 0 {
+        str += format!("{m}m ").as_str();
+    }
+    str += format!("{s}s").as_str();
+    return str;
 }
 
 fn get_session() -> String {
