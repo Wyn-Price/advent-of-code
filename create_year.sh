@@ -1,8 +1,13 @@
 #!/usr/bin/env bash
 
 YEAR=${1:-$(date +%Y)}
+COUNT="25";
 
-echo "Creating $YEAR";
+if [[ $YEAR -ge 2025 ]]; then
+    COUNT=12
+fi
+
+echo "Creating $YEAR with $COUNT days";
 
 mkdir "src/years/y$YEAR"
 
@@ -21,7 +26,7 @@ pub fn part_b(input: &str) -> i64 {
 EOF
 )
 
-for i in $(seq 1 25); do
+for i in $(seq 1 $COUNT); do
     DAY=$(printf %02d $i)
     FILE="src/years/y$YEAR/day$DAY.rs"
     echo " - Day $DAY ";
@@ -31,5 +36,5 @@ for i in $(seq 1 25); do
     fi
 done;
 
-sed -i "s#// insert: new year create#macro_create_year_mod!($YEAR);\n// insert: new year create#" src/years.rs
-sed -i "s#// insert: new year run#$YEAR => y$YEAR::run(day, part, input),\n        // insert: new year run#" src/years.rs
+sed -i "s#// insert: new year create#macro_create_year_mod_$COUNT!($YEAR);\n// insert: new year create#" src/years.rs
+sed -i "s#// insert: new year run#$YEAR => run_with_questions(y$YEAR::questions(), day, part, input),\n        // insert: new year run#" src/years.rs
