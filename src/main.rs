@@ -74,8 +74,9 @@ async fn main() {
         .interact()
         .unwrap();
     if confirmation {
-        if day == 25 && part == Part::A {
-            minimum_delta_day_25_submit(year, to_submit).await;
+        let last_day = if year >= 2025 { 12 } else { 25 };
+        if day == last_day && part == Part::A {
+            minimum_delta_last_day_submit(year, day, to_submit).await;
         } else {
             let response = 'main: loop {
                 let response = aoc::submit_part(year, day, part, to_submit.clone())
@@ -119,17 +120,17 @@ async fn ratelimit_wait(time: u64) {
     }
 }
 
-async fn minimum_delta_day_25_submit(year: i32, to_submit: String) {
+async fn minimum_delta_last_day_submit(year: i32, day: i32, to_submit: String) {
     let done_a = Arc::new(Notify::new());
     let done_b = Arc::new(Notify::new());
 
     let done_a_cloned = done_a.clone();
     tokio::spawn(async move {
-        println!("Sending 25 Part A");
-        let response = aoc::submit_part(year, 25, Part::A, to_submit)
+        println!("Sending Part A");
+        let response = aoc::submit_part(year, day, Part::A, to_submit)
             .await
             .unwrap();
-        println!("25 Part A: {}", response.pretty_text());
+        println!("Part A: {}", response.pretty_text());
         done_a_cloned.notify_one();
     });
 
@@ -142,15 +143,15 @@ async fn minimum_delta_day_25_submit(year: i32, to_submit: String) {
 
         let done_b_cloned = done_b.clone();
         handles.push(tokio::spawn(async move {
-            println!("Sending 25 Part B {i}");
-            let response = match aoc::submit_part(year, 25, Part::B, "0".to_owned()).await {
+            println!("Sending Part B {i}");
+            let response = match aoc::submit_part(year, day, Part::B, "0".to_owned()).await {
                 Ok(r) => r,
                 Err(e) => aoc::Response::Other(e.to_string()),
             };
             if response == aoc::Response::Finished {
                 done_b_cloned.notify_one();
             }
-            println!("25 Part B {i}: {}", response.pretty_text());
+            println!("Part B {i}: {}", response.pretty_text());
         }));
 
         if tokio::select! {
